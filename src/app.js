@@ -11,6 +11,9 @@ const PORT = 3001;
 
 const SERVER_ID = uuidv4();
 
+const USER_UNAME = process.env.USER_UNAME;
+console.log(`User Name from .env: ${USER_UNAME}`);
+
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
