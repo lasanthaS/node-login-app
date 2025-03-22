@@ -11,13 +11,14 @@ const PORT = 3001;
 
 const SERVER_ID = uuidv4();
 
-const USER_UNAME = process.env.USER_UNAME;
-console.log(`User Name from .env: ${USER_UNAME}`);
-
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    cookie: {
+        secure:false,
+        maxAge: 60 * 60 * 1000
+    },
 }));
 
 // Initialize Passport
@@ -27,19 +28,19 @@ app.use(passport.session());
 // Configure OAuth2 strategy
 passport.use(new OAuth2Strategy({
     name: 'Asgardeo',
-    issuer: 'https://api.asgardeo.io/t/lasanthasamarakoon/oauth2/token',
-    authorizationURL: 'https://api.asgardeo.io/t/lasanthasamarakoon/oauth2/authorize',
-    tokenURL: 'https://api.asgardeo.io/t/lasanthasamarakoon/oauth2/token',
-    userInfoURL: 'https://api.asgardeo.io/t/lasanthasamarakoon/oauth2/userinfo',
-    clientID: 'lfOwYiCTLGrLijCUm5tc5ZUD5Csa',
-    callbackURL: 'https://e2b5dc59-2f25-4478-b1cf-336059b9554b.e1-us-east-azure.choreoapps.dev/auth/callback',
-    pkce: true, // Enable PKCE
+    issuer: process.env.OAUTH2_ISSUER,
+    authorizationURL: process.env.OAUTH2_AUTHORIZATION_ENDPOINT,
+    tokenURL: process.env.OAUTH2_TOKEN_ENDPOINT,
+    userInfoURL: process.env.OAUTH2_USERINFO_ENDPOINT,
+    clientID: process.env.OAUTH2_CLIENT_ID,
+    callbackURL: process.env.OAUTH2_REDIRECT_URI,
+    pkce: true,
     state: true,
-    signUpURL: '',
-    logoutURL: 'https://api.asgardeo.io/t/lasanthasamarakoon/oidc/logout',
-    logoutRedirectURI: 'https://e2b5dc59-2f25-4478-b1cf-336059b9554b.e1-us-east-azure.choreoapps.dev/logout',
+    // signUpURL: '',
+    logoutURL: process.env.OAUTH2_LOGOUT_ENDPOINT,
+    logoutRedirectURI: process.env.OAUTH2_POST_LOGOUT_REDIRECT_URI,
     certificate: '',
-    jwksURL: 'https://api.asgardeo.io/t/lasanthasamarakoon/oauth2/jwks',
+    jwksURL: process.env.OAUTH2_JWKS_ENDPOINT,
     scope: ['openid', 'profile', 'email'],
   }, (accessToken, refreshToken, params, profile, done) => {
     // Store user info (Here, just storing accessToken for simplicity)
@@ -61,15 +62,15 @@ passport.deserializeUser((obj, done) => done(null, obj));
 app.get('/', (req, res) => {
     res.send(`
         <h1>Server ID: ${SERVER_ID}</h1>
-        <a href="/auth/login">Login with OAuth2</a>
+        <a href="/login">Login with OAuth2</a>
     `);
 });
 
 // Login route
-app.get('/auth/login', passport.authenticate('oauth2'));
+app.get('/login', passport.authenticate('oauth2'));
 
 // Callback route
-app.get('/auth/callback', 
+app.get('/signin', 
     passport.authenticate('oauth2', { failureRedirect: '/' }),
     (req, res) => {
         res.redirect('/profile');
